@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Global AI. Local Control. | INITS Workshop</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#172033;background:#edf2f7}
+*{box-sizing:border-box}body{margin:0}header{background:#101e36;color:white;padding:24px max(5%,calc((100% - 1080px)/2))}
+header small{color:#7dd3fc;letter-spacing:.1em}h1{font-size:2rem;margin:.3rem 0}header p{color:#ccd7ec;max-width:800px}
+main{max-width:1080px;margin:26px auto;padding:0 18px;display:grid;grid-template-columns:1.1fr .9fr;gap:18px}section{background:white;padding:22px;border-radius:14px;box-shadow:0 2px 14px #19264213}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+label{display:block;font-weight:650;margin:12px 0 5px}textarea,select,input{width:100%;font:inherit;padding:10px;border:1px solid #bdc8d9;border-radius:8px}textarea{height:130px}
+button{background:#1463cf;border:0;color:white;padding:12px 16px;border-radius:8px;cursor:pointer;font-weight:700}button:hover{background:#094ba5}button.secondary{background:#475569}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0f1b2e;color:#c3f6da;padding:14px;border-radius:10px;min-height:100px;font:12px/1.5 ui-monospace,monospace}p.note{font-size:.85rem;color:#5b6780}.badge{color:#e3ffed;background:#166534;padding:5px 10px;border-radius:16px;font-size:.8rem}
+</style></head><body><header><small>INITS · ENTERPRISE LEARNING LAB</small><h1>Global AI. Local Control.</h1><p>Build enterprise AI agents that act within defined data boundaries. Synthetic records only. Offline mode never calls AWS.</p><span class="badge">Local workshop sandbox — not production software</span></header>
+<main><section><h2>Agent lab</h2><label>Business request</label><textarea id="message">Find overdue vendor payments above 5 million naira, identify compliance issues and prepare eligible payments for approval.</textarea><label>Execution backend</label><select id="backend"><option value="offline">Offline deterministic (no AWS calls)</option><option value="bedrock">Amazon Bedrock Converse (AWS credentials required)</option></select><label>User role</label><select id="role"><option value="manager">Manager</option><option value="analyst">Analyst</option></select><p><button onclick="run()">Run controlled agent</button></p><p class="note">The app evaluates permissions server-side. Bedrock mode transmits only screened prompts and allowlisted tool results to configured AWS inference destinations.</p><h3>Output</h3><pre id="output">Click Run controlled agent.</pre></section>
+<section><h2>Human approval boundary</h2><p>Even a compliant agent can only create approval drafts. A separate human approver is required.</p><button class="secondary" onclick="refresh()">Refresh approvals</button><pre id="approvals">None loaded.</pre><label>Approval reference</label><input id="approvalId" value="APR-001"><p><button onclick="approve()">Approve as approver01</button></p><h3>Audit metadata</h3><button class="secondary" onclick="audit()">Inspect audit log</button><pre id="audit">None loaded.</pre><p class="note">This browser UI has no real authentication. Do not expose it to the public internet or interpret its demo role selector as a security control.</p></section></main>
+<script>
+const out=(id,data)=>document.getElementById(id).textContent=JSON.stringify(data,null,2);
+async function send(url,options={}){const r=await fetch(url,options);const v=await r.json();return r.ok?v:{error:r.status,detail:v.detail||v}}
+async function run(){out('output',{status:'running'});const payload={message:document.getElementById('message').value,backend:document.getElementById('backend').value,role:document.getElementById('role').value};out('output',await send('/agent/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}));refresh()}
+async function refresh(){out('approvals',await send('/approvals'))}
+async function approve(){const id=document.getElementById('approvalId').value;out('approvals',await send('/approvals/'+encodeURIComponent(id)+'/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'approver',actor:'approver01'})}));refresh()}
+async function audit(){out('audit',await send('/audit'))}
+</script></body></html>
